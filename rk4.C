@@ -14,7 +14,7 @@
 #include <cstdlib>
 
 // order of theta
-float N = 2.0;
+float N = 3;
 
 // returns -theta^n
 double thetaNFunct( double radius, double thetaDot, 
@@ -96,9 +96,11 @@ int main( int argc, char* argv[]){
 
   // pressure, pushing down on me, pushing down on you
   double pressure = 0;
-  double theta = 1;
-  double thetaDot = 0;
+
+ 
   double radius = 0.00001;
+  double thetaDot = -radius/3;
+  double theta = 1 - pow(radius,2)/6;
   double thetaDoubleDot = dThetaDotdRadius(radius, theta, thetaDot);
 
   double step [2] = {0.0, 0.0};
