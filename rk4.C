@@ -13,70 +13,70 @@
 #include <cstdio>
 #include <cstdlib>
 
-// order of theta
-float N = 3;
+// order of x
+float N = 1;
 
-// returns -theta^n
-double thetaNFunct( double radius, double thetaDot, 
-		    double doubleThetaDot){
-  return ((2/radius)*thetaDot + doubleThetaDot);
+// returns -x^n
+double xNFunc( double t, double dxdt, 
+		    double dvdt){
+  return ((2/t)*dxdt + dvdt);
 }
 
 
 
-// returns theta
-double thetaFunc( double radius, double thetaDot, 
-		  double doubleThetaDot){
-  if( radius > pow(10,-7)){
-    return (-pow(thetaNFunct( radius, thetaDot, doubleThetaDot), 1/N));
+// returns x
+double xFunc( double t, double dxdt, 
+		  double dvdt){
+  if( t > pow(10,-7)){
+    return (-pow(xNFunc( t, dxdt, dvdt), 1/N));
   }
   else {
-    return (1 - pow(radius, 2)/6);
+    return (1 - pow(t, 2)/6);
   }
 }
 
 
-// returns double derivative of theta with respect to squiggle
-double dThetaDotdRadius (double radius, double theta, double thetaDot){
-  return (-(pow(theta, N)) - (2 / radius)*thetaDot);
+// returns double derivative of x with respect to squiggle
+double dvdtFunct (double t, double x, double dxdt){
+  return (-(pow(x, N)) - (2 / t)*dxdt);
 }
 
 
 
-//repopulates the nextSteps array with next values for theta and dtheta
-void steps( double radStep, double radius, double theta,
-		 double thetaDot, double doubleThetaDot, 
+//repopulates the nextSteps array with next values for x and dx
+void steps( double timeStep, double t, double x,
+		 double dxdt, double dvdt, 
 		 double* nextSteps ){
   
-  double dTheta1 = radStep*thetaDot;
-  double dThetaDot1 = 
-    radStep*dThetaDotdRadius(radius, theta, thetaDot );
+  double dx1 = timeStep*dxdt;
+  double dxdt1 = 
+    timeStep*dvdtFunct(t, x, dxdt );
   
-  double dTheta2 = radStep*(thetaDot + dThetaDot1 / 2);
-  double dThetaDot2 = 
-    radStep*dThetaDotdRadius( (radius + radStep/2), 
-			      (theta + dTheta1/2 ),
-			      (thetaDot + dThetaDot1/2));
+  double dx2 = timeStep*(dxdt + dxdt1 / 2);
+  double dxdt2 = 
+    timeStep*dvdtFunct( (t + timeStep/2), 
+			      (x + dx1/2 ),
+			      (dxdt + dxdt1/2));
   
-  double dTheta3 = radStep*(thetaDot + dThetaDot2 / 2);
-  double dThetaDot3 = 
-    radStep*dThetaDotdRadius( (radius + radStep/2), 
-			      (theta + dTheta2/2 ),
-			      (thetaDot + dThetaDot1/2));
+  double dx3 = timeStep*(dxdt + dxdt2 / 2);
+  double dxdt3 = 
+    timeStep*dvdtFunct( (t + timeStep/2), 
+			      (x + dx2/2 ),
+			      (dxdt + dxdt1/2));
   
 
-  double dTheta4 = radStep*(thetaDot + dThetaDot3);
-  double dThetaDot4 = 
-    radStep*dThetaDotdRadius( (radius + radStep), 
-			      (theta + dTheta3 ),
-			      (thetaDot + dThetaDot1));
+  double dx4 = timeStep*(dxdt + dxdt3);
+  double dxdt4 = 
+    timeStep*dvdtFunct( (t + timeStep), 
+			      (x + dx3 ),
+			      (dxdt + dxdt1));
 
-  double dT = (dTheta1 + 2*dTheta2 + 2*dTheta3 + dTheta4)/6;
-  double dTdot = 
-    (dThetaDot1 + 2*dThetaDot2 + 2*dThetaDot3 + dThetaDot4)/6;
+  double dx = (dx1 + 2*dx2 + 2*dx3 + dx4)/6;
+  double dv = 
+    (dxdt1 + 2*dxdt2 + 2*dxdt3 + dxdt4)/6;
 
-  nextSteps[0] = dT;
-  nextSteps[1] = dTdot;
+  nextSteps[0] = dx;
+  nextSteps[1] = dv;
 
 }
 
@@ -86,51 +86,51 @@ int main( int argc, char* argv[]){
   // open file to dump output
   std::ofstream out;
   std::streambuf  *coutbuf;
-  out.open("rk4.txt");
+  out.open("rk4_test.txt");
 
   coutbuf = std::cout.rdbuf(); //save old buf
   std::cout.rdbuf(out.rdbuf()); 
 
   // user passes step size
-  double radStep = atof(argv[1]);
+  double timeStep = atof(argv[1]);
 
   // pressure, pushing down on me, pushing down on you
   double pressure = 0;
 
  
-  double radius = 0.00001;
-  double thetaDot = -radius/3;
-  double theta = 1 - pow(radius,2)/6;
-  double thetaDoubleDot = dThetaDotdRadius(radius, theta, thetaDot);
+  double t = 0.00001;
+  double dxdt = -t/3;
+  double x = 1 - pow(t,2)/6;
+  double dvdt = dvdtFunct(t, x, dxdt);
 
   double step [2] = {0.0, 0.0};
 
   // iterate until you've reached the surface of the star  
-  while( theta > 0.0000001 ){
+  while( x > 0.0000001 ){
 
-    steps( radStep, radius, theta, thetaDot, thetaDoubleDot, step);
-    theta = theta + step[0];
-    thetaDot = thetaDot + step[1];
-    radius = radius + radStep;
-    thetaDoubleDot = dThetaDotdRadius( radius, theta, thetaDot );
+    steps( timeStep, t, x, dxdt, dvdt, step);
+    x = x + step[0];
+    dxdt = dxdt + step[1];
+    t = t + timeStep;
+    dvdt = dvdtFunct( t, x, dxdt );
 
-    pressure += theta*radStep;
+    pressure += x*timeStep;
 
-    // std::cout << "Theta = \t " << std::setprecision(15) 
-    // 	      << theta << std::endl;
+    // std::cout << "X = \t " << std::setprecision(15) 
+    // 	      << x << std::endl;
     
-    // std::cout << "Theta dot = \t " << std::setprecision(15) 
-    // 	      << thetaDot << std::endl;
+    // std::cout << "X dot = \t " << std::setprecision(15) 
+    // 	      << dxdt << std::endl;
 
-    // print radius, theta, theta^n
-    std::cout  << std::setprecision(15) << std::setw(15) << radius << "\t " <<
-      theta << "\t" << pow(theta, N) << std::endl;
+    // print t, x, x^n
+    std::cout  << std::setprecision(15) << std::setw(15) << t << "\t " <<
+      x << "\t" << pow(x, N) << std::endl;
     
-    // std::cout << "Theta doubledot = \t " << std::setprecision(15)
-    // 	      << thetaDoubleDot << std::endl;
+    // std::cout << "X doubledot = \t " << std::setprecision(15)
+    // 	      << xDoubleDot << std::endl;
 
     // std::cout << "Pressure = \t " << std::setprecision(15)
-    // 	      << thetaDoubleDot << std::endl;
+    // 	      << xDoubleDot << std::endl;
 
     
     
